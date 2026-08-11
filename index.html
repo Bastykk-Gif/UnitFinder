@@ -212,7 +212,7 @@
 </header>
 
 <main>
-  <h1>Localisation d'une <span>pièce</span> / box</h1>
+  <h1>Localisation d'un <span>box</span></h1>
 
   <div class="card">
     <label for="site">Site</label>
@@ -235,24 +235,14 @@
 <script>
 // Données extraites des tableaux de référence par site
 const SITES = {
-  BEAUJON: [
-    { min: 1, max: 4180, label: "BEAUJON_NIVEAU-2" },
-    { min: 5000, max: 8237, label: "BEAUJON_NIVEAU-1" }
-  ],
-  LOGNES: [
-    { min: 1, max: 34, label: "LOGNES_DA" },
-    { min: 1001, max: 2506, label: "LOGNES_STOCKAGE_RDC" },
-    { min: 3001, max: 4517, label: "LOGNES_STOCKAGE_ETAGE" },
-    { min: 8101, max: 8313, label: "LOGNES_HUB" }
-  ],
-  ARGENTEUIL: [
+  Argenteuil: [
     { min: 1, max: 110, label: "ARGENTEUIL_DA" },
     { min: 201, max: 939, label: "ARGENTEUIL_STOCKAGE_RDC" },
     { min: 1001, max: 2820, label: "ARGENTEUIL_STOCKAGE_NIV_1" },
     { min: 8001, max: 8036, label: "ARGENTEUIL_HUB_RDC" },
     { min: 8101, max: 8311, label: "ARGENTEUIL_HUB_NIV1" }
   ],
-  CERGY: [
+  Cergy: [
     { min: 1, max: 28, label: "CERGY_DA" },
     { min: 101, max: 620, label: "CERGY_STOCKAGE_RDC" },
     { min: 9101, max: 9844, label: "CERGY_STOCKAGE_SOUS_SOL" },
@@ -260,7 +250,18 @@ const SITES = {
     { min: 901, max: 925, label: "CERGY_HUB_RDC" },
     { min: 8001, max: 8029, label: "CERGY_HUB_1er_ETAGE" }
   ],
-  POISSY: [
+  Lognes: [
+    { min: 1, max: 34, label: "LOGNES_DA" },
+    { min: 1001, max: 2506, label: "LOGNES_STOCKAGE_RDC" },
+    { min: 3001, max: 4517, label: "LOGNES_STOCKAGE_ETAGE" },
+    { min: 8101, max: 8313, label: "LOGNES_HUB" }
+  ],
+  "Paris 13": [],
+  "Paris 8": [
+    { min: 1, max: 4180, label: "BEAUJON_NIVEAU-2" },
+    { min: 5000, max: 8237, label: "BEAUJON_NIVEAU-1" }
+  ],
+  Poissy: [
     { min: 1, max: 39, label: "POISSY_DA" },
     { min: 3002, max: 4204, label: "POISSY_BAT_A_HUB" },
     { min: 6001, max: 6546, label: "POISSY_BAT_A_STOCKAGE" },
@@ -268,12 +269,12 @@ const SITES = {
     { min: 1001, max: 1923, label: "POISSY_BAT_B_1er_etage" },
     { min: 2001, max: 2924, label: "POISSY_BAT_B_2eme_etage" }
   ],
-  SURESNES: [
+  Suresnes: [
     { min: 1, max: 5, label: "SURESNES_RDC" },
     { min: 1001, max: 2515, label: "SURESNES_NIVEAU-1" },
     { min: 3001, max: 4612, label: "SURESNES_NIVEAU-2" }
   ],
-  VELIZY: [
+  "Vélizy": [
     { min: 1, max: 29, label: "VELIZY_DA" },
     { min: 101, max: 153, label: "VELIZY_STOCKAGE_RDC" },
     { min: 1101, max: 1250, label: "VELIZY_STOCKAGE_NIVEAU_1" },
@@ -322,8 +323,14 @@ document.getElementById("search-btn").addEventListener("click", () => {
     return;
   }
 
-  const num = parseInt(rawBox, 10);
   const ranges = SITES[site];
+
+  if (ranges.length === 0) {
+    wrap.innerHTML = resultBox("warning", "Information indisponible", "Aucune donnée pour le moment", `Site : ${site} — le référentiel des box sera ajouté prochainement.`);
+    return;
+  }
+
+  const num = parseInt(rawBox, 10);
   const matches = ranges.filter(r => num >= r.min && num <= r.max);
 
   let html = "";
