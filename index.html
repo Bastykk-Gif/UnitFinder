@@ -1,1 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Localisation d'un box</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f2f4f7;
+    margin: 0;
+    padding: 30px 15px;
+    color: #222;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    color: #14315c;
+  }
+  .card {
+    max-width: 480px;
+    margin: 0 auto 30px auto;
+    background: #fff;
+    border-radius: 8px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 16px;
+    font-size: 0.92rem;
+  }
+  label:first-of-type { margin-top: 0; }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 1rem;
+    border: 1px solid #c7cdd6;
+    border-radius: 5px;
+  }
+  input[type="text"] {
+    letter-spacing: 2px;
+    font-family: monospace;
+    font-size: 1.1rem;
+  }
+  .hint {
+    font-size: 0.78rem;
+    color: #777;
+    margin-top: 4px;
+  }
+  button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 11px;
+    background: #14315c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #1f4780; }
 
+  #result-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .result-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 6px solid #1f8a45;
+  }
+  .result-box.error { border-left-color: #c0392b; }
+  .result-box.warning { border-left-color: #d68a00; }
+  .result-box h2 {
+    font-size: 1.1rem;
+    margin: 0 0 6px 0;
+  }
+  .result-box .location {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #14315c;
+    word-break: break-word;
+  }
+  .result-box .sub {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  caption {
+    background: #14315c;
+    color: #fff;
+    font-weight: 700;
+    padding: 8px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 7px 10px;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  thead th {
+    background: #2255a4;
+    color: #fff;
+  }
+  tr.match {
+    background: #d7f3dd;
+    font-weight: 700;
+  }
+  .empty-msg {
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+    padding: 10px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Localisation d'une pièce / d'un box</h1>
+
+<div class="card">
+  <label for="site">Site</label>
+  <select id="site">
+    <option value="">-- Choisir un site --</option>
+  </select>
+
+  <label for="box">Numéro de box (4 chiffres)</label>
+  <input type="text" id="box" maxlength="4" inputmode="numeric" placeholder="ex: 0452">
+  <div class="hint">Saisir exactement 4 chiffres (zéros compris, ex : 0034).</div>
+
+  <button id="search-btn" type="button">Rechercher</button>
+</div>
+
+<div id="result-wrap"></div>
+
+<script>
+// Données extraites des tableaux de référence par site
+const SITES = {
+  BEAUJON: [
+    { min: 1, max: 4180, label: "BEAUJON_NIVEAU-2" },
+    { min: 5000, max: 8237, label: "BEAUJON_NIVEAU-1" }
+  ],
+  LOGNES: [
+    { min: 1, max: 34, label: "LOGNES_DA" },
+    { min: 1001, max: 2506, label: "LOGNES_STOCKAGE_RDC" },
+    { min: 3001, max: 4517, label: "LOGNES_STOCKAGE_ETAGE" },
+    { min: 8101, max: 8313, label: "LOGNES_HUB" }
+  ],
+  ARGENTEUIL: [
+    { min: 1, max: 110, label: "ARGENTEUIL_DA" },
+    { min: 201, max: 939, label: "ARGENTEUIL_STOCKAGE_RDC" },
+    { min: 1001, max: 2820, label: "ARGENTEUIL_STOCKAGE_NIV_1" },
+    { min: 8001, max: 8036, label: "ARGENTEUIL_HUB_RDC" },
+    { min: 8101, max: 8311, label: "ARGENTEUIL_HUB_NIV1" }
+  ],
+  CERGY: [
+    { min: 1, max: 28, label: "CERGY_DA" },
+    { min: 101, max: 620, label: "CERGY_STOCKAGE_RDC" },
+    { min: 9101, max: 9844, label: "CERGY_STOCKAGE_SOUS_SOL" },
+    { min: 1101, max: 1952, label: "CERGY_STOCKAGE_1er_ETAGE" },
+    { min: 901, max: 925, label: "CERGY_HUB_RDC" },
+    { min: 8001, max: 8029, label: "CERGY_HUB_1er_ETAGE" }
+  ],
+  POISSY: [
+    { min: 1, max: 39, label: "POISSY_DA" },
+    { min: 3002, max: 4204, label: "POISSY_BAT_A_HUB" },
+    { min: 6001, max: 6546, label: "POISSY_BAT_A_STOCKAGE" },
+    { min: 101, max: 809, label: "POISSY_BAT_B_RDC" },
+    { min: 1001, max: 1923, label: "POISSY_BAT_B_1er_etage" },
+    { min: 2001, max: 2924, label: "POISSY_BAT_B_2eme_etage" }
+  ],
+  SURESNES: [
+    { min: 1, max: 5, label: "SURESNES_RDC" },
+    { min: 1001, max: 2515, label: "SURESNES_NIVEAU-1" },
+    { min: 3001, max: 4612, label: "SURESNES_NIVEAU-2" }
+  ],
+  VELIZY: [
+    { min: 1, max: 29, label: "VELIZY_DA" },
+    { min: 101, max: 153, label: "VELIZY_STOCKAGE_RDC" },
+    { min: 1101, max: 1250, label: "VELIZY_STOCKAGE_NIVEAU_1" },
+    { min: 1001, max: 1953, label: "VELIZY_HUB_NIVEAU_1" },
+    { min: 2101, max: 2407, label: "VELIZY_STOCKAGE_NIVEAU_2" },
+    { min: 2001, max: 2951, label: "VELIZY_HUB_NIVEAU_2" },
+    { min: 3101, max: 3811, label: "VELIZY_STOCKAGE_NIVEAU_3" },
+    { min: 3001, max: 3955, label: "VELIZY_HUB_NIVEAU_3" },
+    { min: 4101, max: 4815, label: "VELIZY_STOCKAGE_NIVEAU_4" },
+    { min: 4001, max: 4955, label: "VELIZY_HUB_NIVEAU_4" }
+  ]
+};
+
+function pad4(n) {
+  return String(n).padStart(4, "0");
+}
+
+const siteSelect = document.getElementById("site");
+Object.keys(SITES).forEach(name => {
+  const opt = document.createElement("option");
+  opt.value = name;
+  opt.textContent = name;
+  siteSelect.appendChild(opt);
+});
+
+const boxInput = document.getElementById("box");
+boxInput.addEventListener("input", () => {
+  boxInput.value = boxInput.value.replace(/\D/g, "").slice(0, 4);
+});
+boxInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("search-btn").click();
+});
+
+document.getElementById("search-btn").addEventListener("click", () => {
+  const site = siteSelect.value;
+  const rawBox = boxInput.value.trim();
+  const wrap = document.getElementById("result-wrap");
+  wrap.innerHTML = "";
+
+  if (!site) {
+    wrap.innerHTML = resultBox("error", "Erreur", "Veuillez choisir un site.");
+    return;
+  }
+  if (!/^\d{4}$/.test(rawBox)) {
+    wrap.innerHTML = resultBox("error", "Erreur", "Le numéro de box doit comporter exactement 4 chiffres.");
+    return;
+  }
+
+  const num = parseInt(rawBox, 10);
+  const ranges = SITES[site];
+  const matches = ranges.filter(r => num >= r.min && num <= r.max);
+
+  let html = "";
+  if (matches.length === 0) {
+    html += resultBox("error", "Aucune correspondance", `Le box ${rawBox} n'appartient à aucune plage connue pour le site ${site}.`);
+  } else if (matches.length === 1) {
+    html += resultBox("ok", "Résultat", matches[0].label, `Box ${rawBox} — ${site}`);
+  } else {
+    // plages qui se chevauchent dans les données source
+    const labels = matches.map(m => m.label).join(" / ");
+    html += resultBox("warning", "Plusieurs zones possibles", labels, `Box ${rawBox} — ${site} (plages se chevauchant dans le référentiel)`);
+  }
+
+  html += buildTable(site, ranges, matches);
+  wrap.innerHTML = html;
+});
+
+function resultBox(type, title, mainText, subText) {
+  const cls = type === "ok" ? "" : (type === "warning" ? " warning" : " error");
+  return `
+    <div class="result-box${cls}">
+      <h2>${title}</h2>
+      <div class="location">${mainText}</div>
+      ${subText ? `<div class="sub">${subText}</div>` : ""}
+    </div>`;
+}
+
+function buildTable(site, ranges, matches) {
+  const matchSet = new Set(matches);
+  let rows = ranges.map(r => {
+    const isMatch = matchSet.has(r);
+    return `<tr class="${isMatch ? "match" : ""}">
+      <td>${pad4(r.min)} - ${pad4(r.max)}</td>
+      <td>${r.label}</td>
+    </tr>`;
+  }).join("");
+
+  return `
+    <table>
+      <caption>${site}</caption>
+      <thead><tr><th>Plage</th><th>Zone</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+</script>
+
+</body>
+</html>
