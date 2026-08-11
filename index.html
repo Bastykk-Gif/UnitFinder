@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Lockall — Localisation d'un box</title>
+<title>Lockall - Localisation d'un box</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -229,7 +229,7 @@
 
   <div id="result-wrap"></div>
 
-  <footer>Lockall — outil interne de localisation</footer>
+  <footer>Lockall - outil interne de localisation</footer>
 </main>
 
 <script>
@@ -326,7 +326,7 @@ document.getElementById("search-btn").addEventListener("click", () => {
   const ranges = SITES[site];
 
   if (ranges.length === 0) {
-    wrap.innerHTML = resultBox("warning", "Information indisponible", "Aucune donnée pour le moment", `Site : ${site} — le référentiel des box sera ajouté prochainement.`);
+    wrap.innerHTML = resultBox("warning", "Information indisponible", "Aucune donnée pour le moment", `Site : ${site} - le référentiel des box sera ajouté prochainement.`);
     return;
   }
 
@@ -337,11 +337,11 @@ document.getElementById("search-btn").addEventListener("click", () => {
   if (matches.length === 0) {
     html += resultBox("error", "Aucune correspondance", `Le box ${rawBox} n'appartient à aucune plage connue pour le site ${site}.`);
   } else if (matches.length === 1) {
-    html += resultBox("ok", "Résultat", matches[0].label, `Box ${rawBox} — ${site}`);
+    html += resultBox("ok", "Résultat", matches[0].label, `Box ${rawBox} - ${site}`);
   } else {
     // plages qui se chevauchent dans les données source
     const labels = matches.map(m => m.label).join(" / ");
-    html += resultBox("warning", "Plusieurs zones possibles", labels, `Box ${rawBox} — ${site} (plages se chevauchant dans le référentiel)`);
+    html += resultBox("warning", "Plusieurs zones possibles", labels, `Box ${rawBox} - ${site} (plages se chevauchant dans le référentiel)`);
   }
 
   html += buildTable(site, ranges, matches);
